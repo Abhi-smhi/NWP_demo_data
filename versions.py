@@ -155,6 +155,7 @@ class UrbanAirData():
 
         return url
 
-uad = UrbanAirData()
+if __name__ == "__main__":
 
-print(uad.show())
+    uad = UrbanAirData()
+    print(uad.show())
