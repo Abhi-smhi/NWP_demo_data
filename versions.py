@@ -19,6 +19,7 @@ class UrbanAirData():
                 "expver": "aabg",
                 "georef": "u09tvk",
             },
+            "json": "json/aabg.json",
             "polytope": {
                 "collection": "deode",
                 "url": "polytope-test.ecmwf.int",
@@ -40,6 +41,7 @@ class UrbanAirData():
                 "expver": "aad4",
                 "georef": "u09tvk",
             },
+            "json": "json/aad4.json",
             "polytope": {
                 "collection": "deode",
                 "url": "polytope.ecmwf.int",
@@ -116,13 +118,13 @@ class UrbanAirData():
     def __str__(self):
         txt = "Available versions:\n"
         txt += self.dict_print(self.urls, 1, prefix="\n")
-        
+
         return txt
 
     def show(self, version=None):
         if version is None:
             version = self.current_version
-      
+
         txt = self.dict_print(self.urls[version], 1, prefix="\n")
         json_file = self.urls[version]["metadata"]["json"]
         with open(json_file, "r", encoding="utf-8") as f:
@@ -135,7 +137,7 @@ class UrbanAirData():
             txt += f" group:{i}\n"
             for key, values in group.items():
               txt += f"  {key}: {values}\n"
-          
+
         #txt += json.dumps(toc#)
 
         return txt
