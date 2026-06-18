@@ -3,6 +3,8 @@ import json
 import ipywidgets as widgets
 from IPython.display import display, HTML
 from datetime import datetime
+from ipyfilechooser import FileChooser
+
 
 
 uad = UrbanAirData().urls
@@ -72,7 +74,7 @@ download_button = widgets.Button(
 )
 
 button_cont = widgets.HBox([compute_button, download_button])
-button_cont.layout.display = 'flex'
+#button_cont.layout.display = 'flex'
 button_cont.layout.justify_content = 'space-around'
 button_cont.layout.align_items = 'flex-start'
 button_cont.layout.height = '100px'
@@ -90,16 +92,13 @@ format_dd = widgets.Dropdown(
     options=['grib', 'netCDF'],
     value='grib',
     description="Format :",
-#   style={"description_width": "120px"},
+    layout=widgets.Layout(width='20%'),
 )
 
-file_name_box = widgets.Text(
-    placeholder='x/y/file.grib',
-    description='Download path:',
-    style={"description_width": "120px"},
-    layout=widgets.Layout(width='80%'),
-    disabled=False
-)
+
+fc = FileChooser(path='.', select_default=False)
+fc.title = '<b>Select Directory and Enter Filename</b>'
+
 
 out = widgets.Output( layout=widgets.Layout(width="80%"))
 out_request = widgets.Output(layout=widgets.Layout(width="80%"))
@@ -212,7 +211,7 @@ def create_request(*args):
 
     with out_request:
         out_request.clear_output(wait=False)
-        print(f"\t --- Polytope request ---\n")
+        print(f"\t\t --- Polytope request ---\n")
 
         if (not param_ms.value or (not level_ms.value  and lt_dd.value != 'sfc')):
             print(f" \t WARNING : empty parameters or levels\n")
@@ -220,23 +219,20 @@ def create_request(*args):
         pprint.pprint(request)
 
 def download_request(*args):
-
-    print('WERWEREWRW')
-
     import earthkit.data as edata
-
-    file = file_name_box.value
+    file = fc.value
 
     with out_log:
         out_log.clear_output(wait=False)
-        print('\t --- Download status ---\n')
+        print('\t\t --- Download status ---\n')
         if not request:
             print('Empty request, skipping')
             return
+        if not fc.value:
+            print('No filename provided, skipping')
+            return
         print(f'Starting ...')
         print(f'File : {file}')
-
-    file = file_name_box.value
 
     try:
         dataNOW = edata.from_source("polytope", file_meta["collection"], request,
@@ -247,7 +243,7 @@ def download_request(*args):
         msg = f'Failure caught exception at\n {e}'
 
     finally:
-        msg = f'Success!\nData downloaded at {file}' # TODO
+        msg = f'Success!\nData downloaded at {file}'
 
     with out_log:
         print(msg)
@@ -260,8 +256,10 @@ def download_request(*args):
 main_layout = widgets.Layout(
     width="70%",
     padding="20px",
- #  border="2px solid #ddd",
-   display='flex'
+   border="2px solid #ddd",
+   display='flex',
+   justify_content = 'space-between'
+
 )
 
 
@@ -270,18 +268,18 @@ main_layout = widgets.Layout(
 select_para_level_type = widgets.HBox(
     [
         widgets.VBox(
-            [widgets.HTML("<h3>Level type:</h3> "), lt_dd],
+            [widgets.HTML("<b>Level type:</b> "), lt_dd],
             layout=widgets.Layout(width="50%")
             ),
         widgets.VBox(
-            [widgets.HTML("<h3>Parameter type:</h3>") , paratype_dd],
+            [widgets.HTML("<b>Parameter type:</b>") , paratype_dd],
             layout=widgets.Layout(width="50%")
         ),
     ]
 )
 
-param_title =  widgets.HTML("<h3>Parameters:</h3>")
-level_title =  widgets.HTML("<h3>Levels:</h3>")
+param_title =  widgets.HTML("<b>Parameters:</b>")
+level_title =  widgets.HTML("<b>Levels:</b>")
 
 select_para_level = widgets.HBox(
     [
@@ -299,13 +297,13 @@ select_para_level = widgets.HBox(
 
 file_controls = widgets.HBox(
     [
-             format_dd, file_name_box,
+             format_dd, fc,
     ],
 )
-#file_controls.layout.display = 'flex'
+file_controls.layout.display = 'flex'
 file_controls.layout.justify_content = 'space-between'
 file_controls.layout.align_items = 'center'
-file_controls.layout.height = '100px'
+#file_controls.layout.height = '100px'
 file_controls.layout.width = '80%'
 
 
@@ -318,7 +316,7 @@ ui = widgets.VBox(
         out,
         select_para_level_type,
         select_para_level,
-        widgets.HTML("<h3>Time-steps:</h3>"),
+        widgets.HTML("\n\n<b>Time-steps:</b>"),
         time_slider,
         file_controls,
         button_cont, # for compute button
