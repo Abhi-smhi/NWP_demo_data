@@ -23,7 +23,6 @@ class UrbanAirData():
                 "collection": "deode",
                 "url": "polytope-test.ecmwf.int",
             },
-            "json": "json/aabg.json",
         },
         "Paris_8.0": {
             "nx": 989,
@@ -41,7 +40,6 @@ class UrbanAirData():
                 "expver": "aad4",
                 "georef": "u09tvk",
             },
-             "json": "json/aad4.json",
             "polytope": {
                 "collection": "deode",
                 "url": "polytope.ecmwf.int",
@@ -96,11 +94,7 @@ class UrbanAirData():
             "url": "polytope.ecmwf.int",
             "metadata": data_info["Paris_9.0"],
         },
-
-        
     }
-   
-        
     current_version = list(urls)[-1]
     base_url = urls[current_version]["url"]
 
@@ -161,7 +155,7 @@ class UrbanAirData():
 
         return url
 
+if __name__ == "__main__":
 
-# uad = UrbanAirData()
-
-#print(uad.show())
+    uad = UrbanAirData()
+    print(uad.show())
