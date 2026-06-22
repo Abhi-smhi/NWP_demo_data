@@ -236,7 +236,10 @@ def create_request(*args):
 
 def download_request(*args):
     import earthkit.data as edata
+    from pathlib import Path
+
     file = fc.value
+    Path(file).touch()
 
     with out_log:
         out_log.clear_output(wait=False)
