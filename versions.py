@@ -57,10 +57,29 @@ class UrbanAirData():
             "ny": 989,
             "dx": 500,
             "date": "2023-08-20T15:00:00Z",
-            "forecast_range": "PT36",
+            "forecast_range": "PT36H",
             "output_frequency": "PT15M",
             "fdb": {
                 "expver": "aagp",
+                "georef": "u09tvk",
+            },
+            "json": "json/aagp.json",
+            "polytope": {
+                "collection": "deode",
+                "url": "polytope.ecmwf.int",
+                "ts_none": True,
+            },
+        },
+        "Paris_10.0": {
+            "desc": "HARMONIE-AROME",
+            "nx": 1013,
+            "ny": 1013,
+            "dx": 200,
+            "date": "2023-08-20T18:00:00Z",
+            "forecast_range": "PT30H",
+            "output_frequency": "PT15M",
+            "fdb": {
+                "expver": "aagw",
                 "georef": "u09tvk",
             },
             "json": "json/aagp.json",
@@ -101,6 +120,11 @@ class UrbanAirData():
             "name": "Paris 9.0",
             "url": "polytope.ecmwf.int",
             "metadata": data_info["Paris_9.0"],
+        },
+        "10.0": {
+            "name": "Paris 10.0",
+            "url": "polytope.ecmwf.int",
+            "metadata": data_info["Paris_10.0"],
         },
     }
     current_version = list(urls)[-1]
