@@ -9,6 +9,7 @@ class UrbanAirData():
         "Antwerpen": {"nx": 139, "ny": 139, "dx": 500},
         "Paris": {"nx": 989, "ny": 989, "dx": 500},
         "Paris_7.1": {
+            "desc": "HARMONIE-AROME",
             "nx": 989,
             "ny": 989,
             "dx": 500,
@@ -23,9 +24,11 @@ class UrbanAirData():
             "polytope": {
                 "collection": "deode",
                 "url": "polytope-test.ecmwf.int",
+                "ts_none": True,
             },
         },
         "Paris_8.0": {
+            "desc": "HARMONIE-AROME",
             "nx": 989,
             "ny": 989,
             "dx": 500,
@@ -45,9 +48,11 @@ class UrbanAirData():
             "polytope": {
                 "collection": "deode",
                 "url": "polytope.ecmwf.int",
+                "ts_none": False,
             },
         },
         "Paris_9.0": {
+            "desc": "HARMONIE-AROME",
             "nx": 989,
             "ny": 989,
             "dx": 500,
@@ -62,6 +67,7 @@ class UrbanAirData():
             "polytope": {
                 "collection": "deode",
                 "url": "polytope.ecmwf.int",
+                "ts_none": True,
             },
         },
     }

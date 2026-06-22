@@ -20,7 +20,7 @@ file_options = [x for x,values in uad.items() if 'json' in values['metadata']]
 lt_dict = dict(sfc='surface', pl='pressure level', hl='height level', ml='model level')
 
 # -- empty request and file metadata
-file_meta = dict(json_file = '', expver = '', collection = '', georef='', address='')
+file_meta = dict(json_file = '', expver = '', collection = '', georef='', address='', ts_none=False)
 request= {}
 
 
@@ -122,6 +122,14 @@ def update_file(*args):
     file_meta['collection'] = uad[version]["metadata"]["polytope"]["collection"]
     file_meta['georef'] = uad[version]["metadata"]["fdb"]["georef"]
     file_meta['address'] = uad[version]["metadata"]["polytope"]["url"]
+    file_meta['ts_none'] =  uad[version]["metadata"]["polytope"]["ts_none"]
+
+    file_meta['desc'] =  uad[version]["metadata"]["desc"]
+    file_meta['range'] =  uad[version]["metadata"]["forecast_range"].strip('PT')
+    file_meta['nx'] =  uad[version]["metadata"]["nx"]
+    file_meta['ny'] =  uad[version]["metadata"]["nx"]
+    file_meta['dx'] =  uad[version]["metadata"]["dx"]
+
     file_meta['date'] = dt.strftime("%Y%m%d")
     file_meta['time'] =  dt.strftime("%H%M")
 
@@ -131,8 +139,13 @@ def update_file(*args):
         print(f"Archive info: {uad[version]['name']}")
         print('expver :', file_meta['expver'])
         print('collection:', file_meta['collection'])
+        print('description:', file_meta['desc'])
         print('date:', file_meta['date'])
         print('time:', file_meta['time'])
+        print('range:', file_meta['range'])
+        print('nx:', file_meta['nx'])
+        print('ny:', file_meta['ny'])
+        print('dx:', file_meta['dx'])
 
 
     with open(json_file) as f:
@@ -191,7 +204,10 @@ def create_request(*args):
     request['dataset'] = 'on-demand-extremes-dt'
     request['stream'] =  'oper'
     request['type'] =  'fc'
-    request[ 'timespan']=  'none'
+    if file_meta['ts_none']:
+        request[ 'timespan']=  'none'
+    else:
+        request.pop('timespan', None)
 
     request['georef'] = file_meta['georef']
     request['expver'] = file_meta['expver']
