@@ -136,7 +136,7 @@ def update_file(*args):
     with out:
         out.clear_output(wait=False)
         print(f"--- ARCHIVE SUMMARY ---")
-        print(f"Archive info: {uad[version]['name']}")
+        print(f"Archive name: {uad[version]['name']}")
         print('expver :', file_meta['expver'])
         print('collection:', file_meta['collection'])
         print('description:', file_meta['desc'])
@@ -327,7 +327,7 @@ file_controls.layout.width = '80%'
 # -- assemble ui
 ui = widgets.VBox(
     [
-        widgets.HTML("<h2>Archive version:</h2> "),
+        widgets.HTML("<b>Archive version:</b> "),
         version_dd,
         out,
         select_para_level_type,
