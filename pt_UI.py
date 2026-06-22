@@ -135,7 +135,7 @@ def update_file(*args):
 
     with out:
         out.clear_output(wait=False)
-        print(f"--- ARCHIVE SUMMARY ---")
+        print(f"\t\t --- ARCHIVE SUMMARY ---\n")
         print(f"Archive name: {uad[version]['name']}")
         print('expver :', file_meta['expver'])
         print('collection:', file_meta['collection'])
@@ -163,7 +163,7 @@ def update_lto(data1):
         lt_val = lt_dd.value
         paratype_val = paratype_dd.value
         # -- read para_codes for names and units
-        para_options = [(para_codes[x]['name'] + '  [' + para_codes[x]['units'] + ']', int(x))
+        para_options = [( para_codes[x]['shortName']+':   ' + para_codes[x]['name'] + ' [' + para_codes[x]['units'] + ']', int(x))
                         if x in available_para
                         else (x + ' -- missing info--', int(x))
                         for x in list(lt[lt_val]['para_type'][paratype_val]['param'])]
