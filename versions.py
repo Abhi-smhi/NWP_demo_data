@@ -82,7 +82,7 @@ class UrbanAirData():
                 "expver": "aagw",
                 "georef": "u09tvk",
             },
-            "json": "json/aagp.json",
+            "json": "json/aagw.json",
             "polytope": {
                 "collection": "deode",
                 "url": "polytope.ecmwf.int",

@@ -1,0 +1,181 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+import os
+import sys
+from collections import defaultdict
+import json
+from versions import UrbanAirData
+import re
+
+
+'''
+Description:
+Scans the fdb archives in versions.py and produces json files that describe the structure of the archive desctibed by their 'expver' (metadata)
+
+Instructions:
+* Requires module *ecmwf-toolbox* on ATOS
+
+'''
+
+
+os.environ["FDB5_HOME"] = os.environ["ECMWF_TOOLBOX_DIR"]
+import pyfdb
+
+def conver_deep(obj):
+    'Serialize for json, recursively search key/value pairs in a dict until a set is found '
+    if isinstance(obj, set):
+        return sorted(obj)
+    elif isinstance(obj, dict):
+        return {k: conver_deep(v) for k,v in obj.items()}
+
+def sort_by_minutes(t):
+    '''
+        key function to help sort the strange time formats in fdb archive
+    '''
+    if '-' in t:
+        s,_ = t.split('-')
+    else:
+        s = t
+
+    # -- regex stuff taken from fdb_scan.py
+    if "h" in s and "m" in s:
+      h, m = re.match(r"(\d+)h(\d+)m", s).groups()
+    elif "m" in s:
+      h, m = (0, re.match(r"(\d+)m", s).groups()[0])
+    else:
+      h, m = (s,"0")
+    return int(h) * 60 + int(m) # return minutes used for sorting
+
+
+def sort_time_and_levels(data):
+    '''
+    Sorting levels and times before writing to json
+    '''
+    for level_type in data.keys():
+        for para_type in data[level_type]['para_type']:
+
+            times = []
+            if 'time_steps' in data[level_type]['para_type'][para_type]:
+                times = data[level_type]['para_type'][para_type]['time_steps']
+            times.sort(key=sort_by_minutes)
+            data[level_type]['para_type'][para_type]['time_steps'] = times
+
+            params = []
+            if 'param' in data[level_type]['para_type'][para_type]:
+                params = data[level_type]['para_type'][para_type]['param']
+            params.sort(key=int)
+            data[level_type]['para_type'][para_type]['param'] = params
+
+        levels = data[level_type]['levels']
+        if (level_type != 'sfc'):
+            levels.sort(key=int)
+        else:
+            levels = []
+        if(level_type != 'hl'): levels.reverse()
+        data[level_type]['levels'] = levels
+
+
+
+def write_to_json(final_data, request):
+    file = 'json/' + request['expver'] + '.json'
+    print('Writing to', file)
+    with open(file, mode='w') as file:
+        json.dump(final_data,file)
+
+
+def scan_param_types(request):
+    '''
+    scan fdb request and classify parameters as 'inst', 'cumul' or
+    'other' depdening on time labels
+    '''
+
+    paralog = defaultdict(set)
+    for x in pyfdb.list(request, keys=True):
+        keys = x['keys']
+        param = keys.get('param')
+        times = keys.get('step')
+        paralog[param].add(times)
+
+    paratype = {}
+    for k in paralog.keys():
+        for time in paralog[k]:
+            if '-' in time:
+                if '0-' not in time:
+                    paratype[k] = 'other'
+                    # break
+                else:
+                    paratype[k] = 'cumul'
+                    # break
+            else:
+                paratype[k] = 'inst'
+    return paratype
+
+def scan_fdb(request, paratype):
+    '''
+    Scan fdb request and create nested json for each expver
+    params:
+
+        request: (dict) MARS-style fdb request
+        paratype: (dict) dict containing paramter type (inst, cumul, other) or each parameter number
+    '''
+
+
+    # -- nested json structure
+    data_tree = defaultdict(lambda: {'para_type':
+                            {'inst': defaultdict(set),
+                             'cumul': defaultdict(set),
+                             'other': defaultdict(set)},
+                             'levels': set()}
+                           )
+
+
+    for x in  pyfdb.list(request, keys=True):
+        keys = x['keys']
+
+        levtype = keys.get('levtype')
+        level = keys.get('levelist')
+        param = keys.get('param')
+        step = keys.get('step')
+
+        paratype_loc = paratype[param] # refer
+
+        data_tree[levtype]['para_type'][paratype_loc]['param'].add(param)
+        data_tree[levtype]['para_type'][paratype_loc]['time_steps'].add(step)
+        data_tree[levtype]['levels'].add(level)
+
+    return data_tree #conver_deep(data_tree)
+
+def compose_request(uad):
+
+    request= {
+        "class": "d1",
+        "dataset": "on-demand-extremes-dt",
+        "expver": uad["metadata"]["fdb"]["expver"],
+        "stream": "oper",
+        "type": "fc",
+        "georef": uad["metadata"]["fdb"]["georef"],
+
+    }
+    return request
+
+# ------------- MAIN LOOP ----------------------------------
+
+def main():
+    for url in UrbanAirData().urls:
+        uad = UrbanAirData().urls[url]
+        print('Scanning version',url,':', uad['name'])
+        try:
+            request = compose_request(uad)
+            print('Scanning parameter types (time label based)')
+            paratype_uad = scan_param_types(request)
+            print('Creating json')
+            final_data = scan_fdb(request, paratype_uad)
+            final_data = conver_deep(final_data)
+            sort_time_and_levels(final_data)
+            write_to_json({'level_type':final_data},request)
+        except Exception as e:
+            print('Skipped, caught following exception:\n', e)
+
+if __name__=='__main__':
+    main()
