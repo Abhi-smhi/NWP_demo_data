@@ -152,6 +152,7 @@ class UrbanAirData():
         return txt
 
     def show(self, version=None):
+        import pydoc
         if version is None:
             version = self.current_version
 
@@ -160,17 +161,10 @@ class UrbanAirData():
         with open(json_file, "r", encoding="utf-8") as f:
             toc = json.load(f)
 
-        txt +=f"\nData available from polytope ( from {json_file} )\n"
-        for levtype, content in toc.items():
-          txt += f"\nLevtype:{levtype}\n"
-          for i, group in enumerate(content):
-            txt += f" group:{i}\n"
-            for key, values in group.items():
-              txt += f"  {key}: {values}\n"
+        title = f'\t\t ---- Data available from polytope ( from {json_file} ) --- \n'
+        formatted_json = title + json.dumps(toc, indent=4)
+        pydoc.pager(formatted_json)
 
-        #txt += json.dumps(toc#)
-
-        return txt
 
 
     def url_version(self, version=None):
@@ -190,4 +184,4 @@ class UrbanAirData():
 if __name__ == "__main__":
 
     uad = UrbanAirData()
-    print(uad.show())
+    uad.show()
