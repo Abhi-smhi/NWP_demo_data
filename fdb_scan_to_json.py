@@ -5,8 +5,10 @@ import os
 import sys
 from collections import defaultdict
 import json
+import argparse
 from versions import UrbanAirData
 import re
+import pprint
 
 
 '''
@@ -84,11 +86,28 @@ def write_to_json(final_data, request):
         json.dump(final_data,file)
 
 
-def scan_param_types(request):
+def scan_param_types(request, ts_shown: bool) -> dict:
     '''
     scan fdb request and classify parameters as 'inst', 'cumul' or
-    'other' depdening on time labels
+    'other' deadening on time labels
     '''
+
+    paratype = {}
+    if ts_shown:
+        print('Scanning parameter types (timespan)')
+        for x in pyfdb.list(request, keys=True):
+            keys = x['keys']
+            param = keys.get('param')
+            ts_now = keys.get('timespan')
+            if (ts_now == 'none'):
+                paratype[param] = dict(type='inst', ts=ts_now)
+            elif (ts_now == 'fs'):
+                paratype[param] = dict(type='cumul', ts=ts_now)
+            else:
+                paratype[param] = dict(type='other', ts=ts_now)
+        return paratype
+
+    print('Scanning parameter types (time labels)')
 
     paralog = defaultdict(set)
     for x in pyfdb.list(request, keys=True):
@@ -97,18 +116,17 @@ def scan_param_types(request):
         times = keys.get('step')
         paralog[param].add(times)
 
-    paratype = {}
     for k in paralog.keys():
         for time in paralog[k]:
             if '-' in time:
                 if '0-' not in time:
-                    paratype[k] = 'other'
+                    paratype[k] = dict(type='other', ts=None)
                     # break
                 else:
-                    paratype[k] = 'cumul'
+                    paratype[k] = dict(type='cumul', ts=None)
                     # break
             else:
-                paratype[k] = 'inst'
+                paratype[k] = dict(type='inst', ts=None)
     return paratype
 
 def scan_fdb(request, paratype):
@@ -119,7 +137,6 @@ def scan_fdb(request, paratype):
         request: (dict) MARS-style fdb request
         paratype: (dict) dict containing paramter type (inst, cumul, other) or each parameter number
     '''
-
 
     # -- nested json structure
     data_tree = defaultdict(lambda: {'para_type':
@@ -138,10 +155,12 @@ def scan_fdb(request, paratype):
         param = keys.get('param')
         step = keys.get('step')
 
-        paratype_loc = paratype[param] # refer
+        paratype_loc = paratype[param]['type']
+        ts_now = paratype[param]['ts']
 
         data_tree[levtype]['para_type'][paratype_loc]['param'].add(param)
         data_tree[levtype]['para_type'][paratype_loc]['time_steps'].add(step)
+        data_tree[levtype]['para_type'][paratype_loc]['time_span'].add(ts_now)
         data_tree[levtype]['levels'].add(level)
 
     return data_tree #conver_deep(data_tree)
@@ -162,13 +181,18 @@ def compose_request(uad):
 # ------------- MAIN LOOP ----------------------------------
 
 def main():
-    for url in UrbanAirData().urls:
-        uad = UrbanAirData().urls[url]
-        print('Scanning version',url,':', uad['name'])
+    parser = argparse.ArgumentParser(description="Process a URL, scan fdb to json.")
+    parser.add_argument("-u", "--url", help="Specify a URL to process", default=None)
+    args = parser.parse_args()
+
+    if args.url:
+        uad = UrbanAirData().urls[args.url]
+        print('Scanning version',args.url,':', uad['name'])
         try:
             request = compose_request(uad)
-            print('Scanning parameter types (time label based)')
-            paratype_uad = scan_param_types(request)
+            ts_shown = UrbanAirData().urls[args.url]['metadata']['polytope']['ts_present']
+            paratype_uad = scan_param_types(request,ts_shown)
+            pprint.pprint(paratype_uad)
             print('Creating json')
             final_data = scan_fdb(request, paratype_uad)
             final_data = conver_deep(final_data)
@@ -176,6 +200,22 @@ def main():
             write_to_json({'level_type':final_data},request)
         except Exception as e:
             print('Skipped, caught following exception:\n', e)
+
+    else:
+        for url in UrbanAirData().urls:
+            uad = UrbanAirData().urls[url]
+            print('Scanning version',url,':', uad['name'])
+            try:
+                request = compose_request(uad)
+                ts_shown = UrbanAirData().urls[url]['metadata']['polytope']['ts_present']
+                paratype_uad = scan_param_types(request, ts_shown)
+                print('Creating json')
+                final_data = scan_fdb(request, paratype_uad)
+                final_data = conver_deep(final_data)
+                sort_time_and_levels(final_data)
+                write_to_json({'level_type':final_data},request)
+            except Exception as e:
+                print('Skipped, caught following exception:\n', e)
 
 if __name__=='__main__':
     main()

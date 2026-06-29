@@ -24,7 +24,7 @@ class UrbanAirData():
             "polytope": {
                 "collection": "deode",
                 "url": "polytope-test.ecmwf.int",
-                "ts_none": True,
+                "ts_present": False,
             },
         },
         "Paris_8.0": {
@@ -48,7 +48,7 @@ class UrbanAirData():
             "polytope": {
                 "collection": "deode",
                 "url": "polytope.ecmwf.int",
-                "ts_none": False,
+                "ts_present": False,
             },
         },
         "Paris_9.0": {
@@ -67,7 +67,7 @@ class UrbanAirData():
             "polytope": {
                 "collection": "deode",
                 "url": "polytope.ecmwf.int",
-                "ts_none": True,
+                "ts_present": True,
             },
         },
         "Paris_10.0": {
@@ -86,7 +86,28 @@ class UrbanAirData():
             "polytope": {
                 "collection": "deode",
                 "url": "polytope.ecmwf.int",
-                "ts_none": True,
+                "ts_present": True,
+            },
+        },
+        "Antwerp_2.0": {
+            "desc": "HARMONIE-AROME",
+            "nx": 989,
+            "ny": 989,
+            "dx": 500,
+           "xlatcen" : 51.21,
+           "xloncen" : 4.42,
+            "date": "2025-06-28T18:00:00Z",
+            "forecast_range": "PT36H",
+            "output_frequency": "PT15M",
+            "fdb": {
+                "expver": "aah0",
+                "georef": "u155kd",
+            },
+            "json": "json/aah0.json",
+            "polytope": {
+                "collection": "deode",
+                "url": "polytope.ecmwf.int",
+                "ts_present": True,
             },
         },
     }
@@ -125,6 +146,12 @@ class UrbanAirData():
             "name": "Paris 10.0",
             "url": "polytope.ecmwf.int",
             "metadata": data_info["Paris_10.0"],
+        },
+
+        "11.0": {
+            "name": "Antwerp 2.0",
+            "url": "polytope.ecmwf.int",
+            "metadata": data_info["Antwerp_2.0"],
         },
     }
     current_version = list(urls)[-1]
