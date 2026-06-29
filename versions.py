@@ -110,6 +110,27 @@ class UrbanAirData():
                 "ts_present": True,
             },
         },
+        "Antwerp_3.0": {
+            "desc": "HARMONIE-AROME",
+            "nx": 1013,
+            "ny": 1013,
+            "dx": 200,
+           "xlatcen" : 51.21,
+           "xloncen" : 4.42,
+            "date": "2025-06-28T21:00:00Z",
+            "forecast_range": "PT33H",
+            "output_frequency": "PT15M",
+            "fdb": {
+                "expver": "aah1",
+                "georef": "u155kd",
+            },
+            "json": "json/aah1.json",
+            "polytope": {
+                "collection": "deode",
+                "url": "polytope.ecmwf.int",
+                "ts_present": True,
+            },
+        },
     }
     urls = {
         "4": {
@@ -152,6 +173,11 @@ class UrbanAirData():
             "name": "Antwerp 2.0",
             "url": "polytope.ecmwf.int",
             "metadata": data_info["Antwerp_2.0"],
+        },
+        "12.0": {
+            "name": "Antwerp 3.0",
+            "url": "polytope.ecmwf.int",
+            "metadata": data_info["Antwerp_3.0"],
         },
     }
     current_version = list(urls)[-1]

@@ -8,7 +8,6 @@ import json
 import argparse
 from versions import UrbanAirData
 import re
-import pprint
 
 
 '''
@@ -192,7 +191,6 @@ def main():
             request = compose_request(uad)
             ts_shown = UrbanAirData().urls[args.url]['metadata']['polytope']['ts_present']
             paratype_uad = scan_param_types(request,ts_shown)
-            pprint.pprint(paratype_uad)
             print('Creating json')
             final_data = scan_fdb(request, paratype_uad)
             final_data = conver_deep(final_data)
