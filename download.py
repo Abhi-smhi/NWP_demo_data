@@ -212,19 +212,14 @@ def main(argv):
 
     uad = UrbanAirData()
     if args.list:
-        for url in uad.urls:
-            if 'exporter.nsc.liu.se' in uad.urls[url]['url']:
-                print("\t\t -- Data versions available for direct (url) download  --\n")
-                print(f" ========================")
-                print(f"      version : {url}    ")
-                print(f" ========================\n")
-                pprint.pprint(uad.urls[url])
+        uad.print_url_versions()
         sys.exit()
 
     # Target URL
     version = UrbanAirData().url_version(args.version)
     if version is None:
         sys.exit(1)
+
     base = ensure_trailing_slash(version)
     print(f"Download UrbanAir data v{args.version} from {base}")
     base_root = canonical_base(base)

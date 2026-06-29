@@ -174,12 +174,24 @@ class UrbanAirData():
             if not isinstance(version, str):
                 version = str(version)
             url = self.urls[version]["url"]
+            if 'liu.se' not in url:
+                print(f"Version {version} does not have an lie.se url.")
+                print(f"Run 'python download.py -l' for available versions")
+                url = None
         except KeyError:
-            print(f"Version {version} is not available")
+            print(f"KeyError: {version} is not listed")
             print(self)
             url = None
 
         return url
+
+    def print_url_versions(self):
+        import pprint
+        print("\n\t\t -- Data versions available for direct (url) download  --\n")
+        for url in self.urls:
+            if 'exporter.nsc.liu.se' in self.urls[url]['url']:
+                print(f"version : {url} \n")
+                pprint.pprint(self.urls[url])
 
 if __name__ == "__main__":
 
