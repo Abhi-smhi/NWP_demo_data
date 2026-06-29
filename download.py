@@ -9,6 +9,7 @@ import argparse
 import os
 import sys
 import time
+import pprint
 import requests
 from urllib.parse import urljoin, urlparse, unquote
 from bs4 import BeautifulSoup
@@ -211,7 +212,13 @@ def main(argv):
 
     uad = UrbanAirData()
     if args.list:
-        print(uad)
+        for url in uad.urls:
+            if 'exporter.nsc.liu.se' in uad.urls[url]['url']:
+                print("\t\t -- Data versions available for direct (url) download  --\n")
+                print(f" ========================")
+                print(f"      version : {url}    ")
+                print(f" ========================\n")
+                pprint.pprint(uad.urls[url])
         sys.exit()
 
     # Target URL
