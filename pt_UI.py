@@ -20,7 +20,8 @@ file_options = [x for x,values in uad.items() if 'json' in values['metadata']]
 lt_dict = dict(sfc='surface', pl='pressure level', hl='height level', ml='model level')
 
 # -- empty request and file metadata
-file_meta = dict(json_file = '', expver = '', collection = '', georef='', address='', ts_none=False)
+file_meta = dict(json_file = '', expver = '', collection = '', georef='',
+        address='', ts_present=False, timespan='')
 request= {}
 
 
@@ -122,7 +123,7 @@ def update_file(*args):
     file_meta['collection'] = uad[version]["metadata"]["polytope"]["collection"]
     file_meta['georef'] = uad[version]["metadata"]["fdb"]["georef"]
     file_meta['address'] = uad[version]["metadata"]["polytope"]["url"]
-    file_meta['ts_none'] =  uad[version]["metadata"]["polytope"]["ts_none"]
+    file_meta['ts_present'] =  uad[version]["metadata"]["polytope"]["ts_present"]
 
     file_meta['desc'] =  uad[version]["metadata"]["desc"]
     file_meta['range'] =  uad[version]["metadata"]["forecast_range"].strip('PT')
@@ -169,6 +170,9 @@ def update_lto(data1):
                         for x in list(lt[lt_val]['para_type'][paratype_val]['param'])]
         param_ms.options = para_options
         times_now = lt[lt_val]['para_type'][paratype_val]["time_steps"]
+
+# TODO: needs to be revised for the case when the same parameter has multiple timespan values
+        file_meta['timespan'] = lt[lt_val]['para_type'][paratype_val]["time_span"]
         level_opts = lt[lt_val]['levels']
 
         if not para_options:
@@ -204,8 +208,8 @@ def create_request(*args):
     request['dataset'] = 'on-demand-extremes-dt'
     request['stream'] =  'oper'
     request['type'] =  'fc'
-    if file_meta['ts_none']:
-        request[ 'timespan']=  'none'
+    if file_meta['ts_present']:
+        request[ 'timespan']=  list(file_meta['timespan'])[0]
     else:
         request.pop('timespan', None)
 
@@ -231,6 +235,9 @@ def create_request(*args):
 
         if (not param_ms.value or (not level_ms.value  and lt_dd.value != 'sfc')):
             print(f" \t WARNING : empty parameters or levels\n")
+
+        if (paratype_dd.value == 'cumul' and time_list[0] == '0'):
+            print(f" \t WARNING : cumul paratype contains time-step 0\n")
 
         pprint.pprint(request)
 
