@@ -9,6 +9,7 @@ import argparse
 import os
 import sys
 import time
+import pprint
 import requests
 from urllib.parse import urljoin, urlparse, unquote
 from bs4 import BeautifulSoup
@@ -211,13 +212,14 @@ def main(argv):
 
     uad = UrbanAirData()
     if args.list:
-        print(uad)
+        uad.print_url_versions()
         sys.exit()
 
     # Target URL
     version = UrbanAirData().url_version(args.version)
     if version is None:
         sys.exit(1)
+
     base = ensure_trailing_slash(version)
     print(f"Download UrbanAir data v{args.version} from {base}")
     base_root = canonical_base(base)

@@ -179,6 +179,7 @@ class UrbanAirData():
         return txt
 
     def show(self, version=None):
+        import pydoc
         if version is None:
             version = self.current_version
 
@@ -187,17 +188,10 @@ class UrbanAirData():
         with open(json_file, "r", encoding="utf-8") as f:
             toc = json.load(f)
 
-        txt +=f"\nData available from polytope ( from {json_file} )\n"
-        for levtype, content in toc.items():
-          txt += f"\nLevtype:{levtype}\n"
-          for i, group in enumerate(content):
-            txt += f" group:{i}\n"
-            for key, values in group.items():
-              txt += f"  {key}: {values}\n"
+        title = f'\t\t ---- Data available from polytope ( from {json_file} ) --- \n'
+        formatted_json = title + json.dumps(toc, indent=4)
+        pydoc.pager(formatted_json)
 
-        #txt += json.dumps(toc#)
-
-        return txt
 
 
     def url_version(self, version=None):
@@ -207,14 +201,26 @@ class UrbanAirData():
             if not isinstance(version, str):
                 version = str(version)
             url = self.urls[version]["url"]
+            if 'liu.se' not in url:
+                print(f"Version {version} does not have an lie.se url.")
+                print(f"Run 'python download.py -l' for available versions")
+                url = None
         except KeyError:
-            print(f"Version {version} is not available")
+            print(f"KeyError: {version} is not listed")
             print(self)
             url = None
 
         return url
 
+    def print_url_versions(self):
+        import pprint
+        print("\n\t\t -- Data versions available for direct (url) download  --\n")
+        for url in self.urls:
+            if 'exporter.nsc.liu.se' in self.urls[url]['url']:
+                print(f"version : {url} \n")
+                pprint.pprint(self.urls[url])
+
 if __name__ == "__main__":
 
     uad = UrbanAirData()
-    print(uad.show())
+    uad.show()
