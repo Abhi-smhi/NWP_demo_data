@@ -14,14 +14,16 @@ with open('json/para_codes.json') as f:
 available_para = list(para_codes.keys())
 
 # -- only those urls in version.py that have an associated json
-file_options = [x for x,values in uad.items() if 'json' in values['metadata']]
+file_options = [x for x,values in uad.items() if 'json' in values['metadata']]# and values['metadata']['polytope']['ts_present']]
 
 # -- helper for level type
 lt_dict = dict(sfc='surface', pl='pressure level', hl='height level', ml='model level')
 
 # -- empty request and file metadata
 file_meta = dict(json_file = '', expver = '', collection = '', georef='',
-        address='', ts_present=False, timespan='')
+        address='', ts_present=False, timespan='', t_match=True )
+
+datfile= {}
 request= {}
 
 
@@ -116,7 +118,6 @@ def update_file(*args):
     dt = datetime.strptime(dt, "%Y-%m-%dT%H:%M:%SZ")
 
 
-
     # -- update file_meta
     file_meta['json_file'] = json_file
     file_meta['expver'] = uad[version]['metadata']['fdb']['expver']
@@ -150,49 +151,83 @@ def update_file(*args):
 
 
     with open(json_file) as f:
-        data1 = json.load(f)
+        datfile[0] = json.load(f)
 
-    lt_dd.options=['sfc'] # -- reset to surface every time a new archive is picked
-    lt_dd.value='sfc'
-    update_lto(data1)
-
-def update_lto(data1):
-    lt = data1["level_type"]
+    lt_dd.options=['sfc'] # --
+    lt_dd.value='sfc'# -- reset to surface every time a new archive is picked
+    lt = datfile[0]["level_type"]
     lt_dd.options=[(lt_dict[x], x) for x in lt.keys()]
+    update_levels()
 
-    def update_ui(*args):
-        lt_val = lt_dd.value
-        paratype_val = paratype_dd.value
-        # -- read para_codes for names and units
-        para_options = [( para_codes[x]['shortName']+':   ' + para_codes[x]['name'] + ' [' + para_codes[x]['units'] + ']', int(x))
-                        if x in available_para
-                        else (x + ' -- missing info--', int(x))
-                        for x in list(lt[lt_val]['para_type'][paratype_val]['param'])]
-        param_ms.options = para_options
-        times_now = lt[lt_val]['para_type'][paratype_val]["time_steps"]
+def check_request_doable(*args):
+    time_slider.disabled = False
+    compute_button.disabled = False
+    warn = ''
+    if (not param_ms.options) or  (not param_ms.value):
+        time_slider.options = (' ',)
+        time_slider.disabled = True
+        compute_button.disabled = True
+        warn += '\n * No parameters available or chosen'
 
-# TODO: needs to be revised for the case when the same parameter has multiple timespan values
-        file_meta['timespan'] = lt[lt_val]['para_type'][paratype_val]["time_span"]
-        level_opts = lt[lt_val]['levels']
+    if (not file_meta['t_match']):
+        time_slider.options = (' ',)
+        time_slider.disabled = True
+        compute_button.disabled = True
+        warn += '\n * Chosen paramters were stored at different frequencies'
 
-        if not para_options:
-            time_slider.options = (' ',)
-            time_slider.disabled = True
-            compute_button.disabled = True
-            level_ms.options = []
+    if (not level_ms.value  and lt_dd.value != 'sfc'):
+        compute_button.disabled = True
+        warn += '\n * No levels chosen'
 
+    with out_log:
+        out_log.clear_output(wait=False)
+        print('\t\t --- INFO ---')
+        if warn:
+            print('Cannot make request:', warn)
         else:
-            level_ms.options = level_opts
-            time_slider.options = times_now
-            # time_slider.index = (0, len(times_now) - 1)
-            time_slider.disabled = False
-            compute_button.disabled = False
+            print("Good to go! Create request")
 
 
-    update_ui()
+def update_paras(*args):
+    lt = datfile[0]["level_type"]
+    lt_val = lt_dd.value
 
-    lt_dd.observe(update_ui, names='value')
-    paratype_dd.observe(update_ui, names='value')
+    paratype_val = paratype_dd.value
+    # -- read para_codes for names and units
+    para_options = [( para_codes[x]['shortName']+':   ' + para_codes[x]['name'] + ' [' + para_codes[x]['units'] + ']', int(x))
+                    if x in available_para
+                    else (x + ' -- missing info--', int(x))
+                    for x in list(lt[lt_val]['para_type'][paratype_val].keys())]
+    param_ms.options = para_options
+    update_time_steps()
+
+def update_levels(*args):
+    lt = datfile[0]["level_type"]
+    lt_val = lt_dd.value
+    level_ms.options = list(lt[lt_val]['levels'])
+    update_paras()
+
+
+def update_time_steps(*args):
+    lt = datfile[0]["level_type"]
+    lt_val = lt_dd.value
+    paratype_val = paratype_dd.value
+
+    times_now = []
+    t_list = []
+    if param_ms.value and lt_val:
+        file_meta['timespan'] = lt[lt_val]['para_type'][paratype_val][str(param_ms.value[0])]["time_span"]
+
+        t_list = [lt[lt_val]['para_type'][paratype_val][str(x)]["time_steps"]  for x in param_ms.value]
+        file_meta['t_match'] = all(l == t_list[0] for l in t_list) or (len(t_list) == 1)
+        times_now = t_list[0]
+
+    if times_now:
+        time_slider.options = times_now
+    else:
+        time_slider.options = (' ',)
+
+    check_request_doable()
 
 
 def delim_txt_list(l_in):
@@ -202,7 +237,6 @@ def delim_txt_list(l_in):
 
 def create_request(*args):
     import pprint
-
 
     request['class'] = 'd1'
     request['dataset'] = 'on-demand-extremes-dt'
@@ -233,11 +267,6 @@ def create_request(*args):
         out_request.clear_output(wait=False)
         print(f"\t\t --- Polytope request ---\n")
 
-        if (not param_ms.value or (not level_ms.value  and lt_dd.value != 'sfc')):
-            print(f" \t WARNING : empty parameters or levels\n")
-
-        if (paratype_dd.value == 'cumul' and time_list[0] == '0'):
-            print(f" \t WARNING : cumul paratype contains time-step 0\n")
 
         pprint.pprint(request)
 
@@ -346,16 +375,24 @@ ui = widgets.VBox(
         time_slider,
         file_controls,
         button_cont, # for compute button
+        out_log,
         out_request,
-        out_log
     ],
     layout=main_layout
 )
 
 def main_loop():
-    update_file()
+    update_file() # start of options
+
     version_dd.observe(update_file, names='value')
+    lt_dd.observe(update_levels, names='value')
+    paratype_dd.observe(update_paras, names='value')
+    param_ms.observe(update_time_steps, names='value')
+    level_ms.observe(check_request_doable, names='value')
+    time_slider.observe(check_request_doable, names='value')
+
     compute_button.on_click(create_request)
     download_button.on_click(download_request)
+
 
     display(ui)
